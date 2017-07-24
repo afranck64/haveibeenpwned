@@ -16,8 +16,9 @@ except ImportError:
 monkey.patch_all(thread=False, select=False)
 
 # global variables
-BASE_URL = "https://haveibeenpwned.com/api/v2/"
+BASE_URL = "https://haveibeenpwned.com/api/{api_version}/"
 HEADERS = {"User-Agent": "hibp-python",}
+DEFAULT_API_VERSION = "v2"
 
 # enumerate the types of services that are callable
 class Services(Enum):
@@ -45,30 +46,33 @@ class HIBP(object):
         self.response = None
 
     @classmethod
-    def get_account_breaches(cls,account):
+    def get_account_breaches(cls,account, api_version=DEFAULT_API_VERSION):
         '''
         Setup request to retrieve all breaches on a particular account
 
         Args:
             - account -> account you want to query. can be email or username to
                          anything
+            - api_version -> the server's requested api version: e.g v1 or v2
         Returns:
             - HIBP object with updated url, service, and param attributes
         '''
         req = cls()
-        req.url = BASE_URL + "breachedaccount/{}".format(account)
+        req.url = BASE_URL.format(api_version=api_version) + \
+                "breachedaccount/{}".format(account)
         req.service = Services.AccountBreach
         req.param = account
         return req
 
     @classmethod
-    def get_domain_breaches(cls,domain):
+    def get_domain_breaches(cls,domain, api_version=DEFAULT_API_VERSION):
         '''
         Setup request to retrieve all breaches on a particular domain
 
         Args:
             - domain -> domain you want to query. must be valid domain,
                          according to RFC 1035
+            - api_version -> the server's requested api version: e.g v1 or v2
         Returns:
             - HIBP object with updated url, service, and param attributes
         '''
@@ -76,51 +80,60 @@ class HIBP(object):
         domain_regex = re.compile(r"[a-zA-Z\d-]{,63}(\.[a-zA-Z\d-]{,63})+")
         if not re.match(domain_regex, domain):
             raise ValueError("{} is an invalid domain.".format(domain))
-        req.url = BASE_URL +  "breaches?domain={}".format(domain)
+        req.url = BASE_URL.format(api_version=api_version) +  \
+                "breaches?domain={}".format(domain)
         req.service = Services.DomainBreach
         req.param = domain
         return req
 
     @classmethod
-    def get_breach(cls,name):
+    def get_breach(cls,name, api_version=DEFAULT_API_VERSION):
         '''
         Setup request to retrieve a specific breach.
 
         Args:
             - name -> name of breach you want to query. To get a list of
                       all breach names, run HIBP.get_all_breaches()
+            - api_version -> the server's requested api version: e.g v1 or v2
         Returns:
             - HIBP object with updated url, service, and param attributes
         '''
         req = cls()
-        req.url = BASE_URL + "breach/{}".format(name)
+        req.url = BASE_URL.format(api_version=api_version) + \
+                "breach/{}".format(name)
         req.service = Services.Breach
         req.param = name
         return req
 
     @classmethod
-    def get_all_breaches(cls):
+    def get_all_breaches(cls, api_version=DEFAULT_API_VERSION):
         '''
         Setup request to retrieve all breaches recorded on HIBP.com so far.
+
+        Args:
+            - api_version -> the server's requested api version: e.g v1 or v2
 
         Returns:
             - HIBP object with updated url, service, and param attributes
         '''
         req = cls()
-        req.url = BASE_URL + "breaches"
+        req.url = BASE_URL.format(api_version=api_version) + "breaches"
         req.service = Services.AllBreaches
         return req
 
     @classmethod
-    def get_dataclasses(cls):
+    def get_dataclasses(cls, api_version=DEFAULT_API_VERSION):
         '''
         Setup request to retrieve all dataclasses on HIBP.
+
+        Args:
+            - api_version -> the server's requested api version: e.g v1 or v2
 
         Returns:
             - HIBP object with updated url, service, and param attributes
         '''
         req = cls()
-        req.url = BASE_URL + "dataclasses"
+        req.url = BASE_URL.format(api_version=api_version) + "dataclasses"
         req.service = Services.DataClasses
         return req
 
