@@ -20,7 +20,8 @@ monkey.patch_all(thread=False, select=False)
 BASE_URL = "https://haveibeenpwned.com/api/{api_version}/"
 HEADERS = {"User-Agent": "hibp-python",}
 DEFAULT_API_VERSION = "v2"
-#API delay between two calls
+
+#Min delay between two api calls
 API_CALL_DELAY = 1.601
 
 # decorator for api min-delay calls
@@ -125,12 +126,13 @@ class HIBP(object):
         return req
 
     @classmethod
-    def get_paste_account(cls, name, api_version=DEFAULT_API_VERSION):
+    def get_paste_account(cls, account, api_version=DEFAULT_API_VERSION):
         '''
         Setup request to retrieve all pasted on HIBP for a givent website.
 
         Args:
-            - name -> name of paste account you want to query.
+            - account -> account you want to query. can be email or username to
+                         anything
             - api_version -> the server's requested api version: e.g v1 or v2
 
         Returns:
@@ -138,9 +140,9 @@ class HIBP(object):
         '''
         req = cls()
         req.url = BASE_URL.format(api_version=api_version) + \
-                "pasteaccount/{}".format(name)
+                "pasteaccount/{}".format(account)
         req.service = Services.PasteAccount
-        req.param = name
+        req.param = account
         return req
 
     @classmethod
@@ -202,6 +204,9 @@ class HIBP(object):
             self.response = "object has not been pwned."
             return self
         elif response.text == "[]" and self.service == Services.DomainBreach:
+            self.response = "object has not been pwned."
+            return self
+        elif response.status_code == 404 and self.service == Services.PasteAccount:
             self.response = "object has not been pwned."
             return self
         elif response.status_code == 404 and self.service == Services.Breach:
