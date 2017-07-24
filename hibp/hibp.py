@@ -1,5 +1,6 @@
 from enum import Enum
 import re
+import time
 
 try:
     import requests
@@ -19,6 +20,23 @@ monkey.patch_all(thread=False, select=False)
 BASE_URL = "https://haveibeenpwned.com/api/{api_version}/"
 HEADERS = {"User-Agent": "hibp-python",}
 DEFAULT_API_VERSION = "v2"
+#API delay between two calls
+API_CALL_DELAY = 1.601
+
+# decorator for api min-delay calls
+def api_min_delay(base_func):
+    '''Forces the called function to wait until the api's call delay
+        is ellapsed before returning, to avoid exceeding rate.'''
+    def func(*args, **kwargs):
+        start = time.time()
+        res = base_func(*args, **kwargs)
+        stop = time.time()
+        ellapsed_time = stop-start
+        remaining_time = max(API_CALL_DELAY - ellapsed_time, 0)
+        time.sleep(remaining_time)
+        return res
+    return func
+
 
 # enumerate the types of services that are callable
 class Services(Enum):
@@ -141,6 +159,8 @@ class HIBP(object):
         '''
         Execute a GET request on HIBP REST API service based on request
         object setup with one of the query services above.
+        If many queries are to be executed in batch, use @execute_min_delay
+        instead.
 
         Returns:
             - If query parameter is pwned:
@@ -171,6 +191,13 @@ class HIBP(object):
         else:
             self.response = response.json()
         return self
+        
+    def execute_min_delay(self):
+        '''Calls execute and make sure the minimal delay between two api calls
+            is ellapsed before returning.'''
+        delayed_func = api_min_delay(self.execute)
+        return delayed_func()
+
 
 class AsyncHIBP(object):
     '''
@@ -193,6 +220,7 @@ class AsyncHIBP(object):
         self.url = None
         self.response = None
 
+    @api_min_delay
     def send(self,hibp_obj):
         '''
         Spawns gevent/pool threads that will run the execute method on each
@@ -223,6 +251,5 @@ class AsyncHIBP(object):
         Attributes:
             - hibp_objs - list of HIBP objects
         '''
-        for hibp_obj in self.pool.imap_unordered(HIBP.execute, hibp_objs):
-                yield hibp_obj.response
-        self.pool.join()
+        for hibp_obj in hibp_objs:
+            yield HIBP.execute_min_delay(hibp_obj)
