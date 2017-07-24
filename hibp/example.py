@@ -10,11 +10,13 @@ if __name__ == '__main__':
     names = ['adobe','ashleymadison', 'naughtyamerica', 'myspace']
     accounts = ["ssgrn", "pegasos1","barackobama"]
     domains = ['twitter.com', 'facebook.com','github.com','adobe.com']
+    paste_accounts = ['test@example.com']
 
     # setup HIBP objects for request executions
     reqs = [HIBP.get_breach(x) for x in names] \
            + [HIBP.get_account_breaches(x) for x in accounts] \
-           + [HIBP.get_domain_breaches(x) for x in domains]
+           + [HIBP.get_domain_breaches(x) for x in domains] \
+           + [HIBP.get_paste_account(x) for x in paste_accounts]
 
     ### SERIAL
     start_time = time.time()

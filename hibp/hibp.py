@@ -45,6 +45,7 @@ class Services(Enum):
     Breach = "breach"
     AllBreaches = "allbreaches"
     DataClasses = "dataclasses"
+    PasteAccount = "pasteaccount"
 
 # generic HIBP class
 class HIBP(object):
@@ -120,6 +121,25 @@ class HIBP(object):
         req.url = BASE_URL.format(api_version=api_version) + \
                 "breach/{}".format(name)
         req.service = Services.Breach
+        req.param = name
+        return req
+
+    @classmethod
+    def get_paste_account(cls, name, api_version=DEFAULT_API_VERSION):
+        '''
+        Setup request to retrieve all pasted on HIBP for a givent website.
+
+        Args:
+            - name -> name of paste account you want to query.
+            - api_version -> the server's requested api version: e.g v1 or v2
+
+        Returns:
+            - HIBP object with updated url, service, and param attributes
+        '''
+        req = cls()
+        req.url = BASE_URL.format(api_version=api_version) + \
+                "pasteaccount/{}".format(name)
+        req.service = Services.PasteAccount
         req.param = name
         return req
 
